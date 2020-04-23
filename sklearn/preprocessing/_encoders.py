@@ -10,6 +10,7 @@ from ..utils import check_array
 from ..utils.array_creation import zeros_like, ones_like
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 from ._label import _encode, _encode_check_unknown
 
@@ -294,7 +295,8 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 1., 0.]])
     """
 
-    def __init__(self, categories='auto', drop=None, sparse=True,
+    @_deprecate_positional_args
+    def __init__(self, *, categories='auto', drop=None, sparse=True,
                  dtype=np.float64, handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
@@ -655,7 +657,8 @@ class OrdinalEncoder(_BaseEncoder):
            ['Female', 2]], dtype=object)
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    @_deprecate_positional_args
+    def __init__(self, *, categories='auto', dtype=np.float64):
         self.categories = categories
         self.dtype = dtype
 
