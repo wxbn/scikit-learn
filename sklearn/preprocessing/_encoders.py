@@ -188,6 +188,8 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
+        .. versionadded:: 0.20
+
     drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
             default=None
         Specifies a methodology to use to drop one of the categories per
@@ -605,7 +607,7 @@ class OrdinalEncoder(_BaseEncoder):
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
-    .. versionchanged:: 0.20.1
+    .. versionadded:: 0.20
 
     Parameters
     ----------
