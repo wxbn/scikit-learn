@@ -1568,6 +1568,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
+        output_type = get_input_type(X)
         X = check_array(X, order='F', dtype=FLOAT_DTYPES,
                         accept_sparse=('csr', 'csc'))
 
@@ -1664,6 +1665,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     new_index.append(current_col)
                     index = new_index
 
+        XP = to_output_type(XP, output_type, order=self.order)
         return XP
 
 
