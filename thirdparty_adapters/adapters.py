@@ -59,7 +59,7 @@ _input_type_to_str = {
 }
 
 
-def input_to_type(input):
+def get_input_type(input):
     # function to access _input_to_str, while still using the correct
     # numba check for a numba device_array
     if type(input) in _input_type_to_str.keys():

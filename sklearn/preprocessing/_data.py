@@ -13,14 +13,16 @@ import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
-import numpy as np
-from scipy import sparse
+import numpy as cpu_np
+import cupy as np
+import cupyx
+from cupy import sparse
 from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
 
 from ._skl_dependencies import BaseEstimator, TransformerMixin
-from ...thirdparty_adapters import check_array
+from ...thirdparty_adapters import check_array, get_input_type, to_output_type
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.validation import (check_is_fitted, check_random_state,
@@ -395,11 +397,14 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
+        output_type = get_input_type(X)
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
         X *= self.scale_
         X += self.min_
+
+        X = to_output_type(X, output_type)
         return X
 
     def inverse_transform(self, X):
@@ -417,11 +422,14 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
+        output_type = get_input_type(X)
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
         X -= self.min_
         X /= self.scale_
+
+        X = to_output_type(X, output_type)
         return X
 
     def _more_tags(self):
@@ -756,8 +764,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no
         # missing values)
-        if np.ptp(self.n_samples_seen_) == 0:
+        ptp = np.amax(self.n_samples_seen_) - np.amin(self.n_samples_seen_)
+        if ptp == 0:
             self.n_samples_seen_ = self.n_samples_seen_[0]
+        del ptp
 
         if self.with_std:
             self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))
@@ -779,6 +789,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
+
+        output_type = get_input_type(X)
         X = self._validate_data(X, reset=False,
                                 accept_sparse='csr', copy=copy,
                                 estimator=self, dtype=FLOAT_DTYPES,
@@ -796,6 +808,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 X -= self.mean_
             if self.with_std:
                 X /= self.scale_
+
+        X = to_output_type(X, output_type)
         return X
 
     def inverse_transform(self, X, copy=None):
@@ -816,6 +830,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
+
+        output_type = get_input_type(X)
+        X = check_array(X, accept_sparse='csr', copy=copy,
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
+
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -836,6 +856,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 X *= self.scale_
             if self.with_mean:
                 X += self.mean_
+
+        X = to_output_type(X, output_type)
         return X
 
     def _more_tags(self):
@@ -987,6 +1009,8 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             The data that should be scaled.
         """
         check_is_fitted(self)
+
+        output_type = get_input_type(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -995,6 +1019,8 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             inplace_column_scale(X, 1.0 / self.scale_)
         else:
             X /= self.scale_
+
+        X = to_output_type(X, output_type)
         return X
 
     def inverse_transform(self, X):
@@ -1006,6 +1032,8 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             The data that should be transformed back.
         """
         check_is_fitted(self)
+
+        output_type = get_input_type(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1014,6 +1042,8 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             inplace_column_scale(X, self.scale_)
         else:
             X *= self.scale_
+
+        X = to_output_type(X, output_type)
         return X
 
     def _more_tags(self):
