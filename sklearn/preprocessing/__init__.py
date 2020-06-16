@@ -25,16 +25,6 @@ from ._data import power_transform
 from ._data import PowerTransformer
 from ._data import PolynomialFeatures
 
-from ._encoders import OneHotEncoder
-from ._encoders import OrdinalEncoder
-
-from ._label import label_binarize
-from ._label import LabelBinarizer
-from ._label import LabelEncoder
-from ._label import MultiLabelBinarizer
-
-from ._discretization import KBinsDiscretizer
-
 
 __all__ = [
     'Binarizer',

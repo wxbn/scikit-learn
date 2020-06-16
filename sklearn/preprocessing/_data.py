@@ -19,21 +19,13 @@ from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
+from ._skl_dependencies import BaseEstimator, TransformerMixin
+from ...thirdparty_adapters import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
-                                      inplace_csr_row_normalize_l2)
-from ..utils.sparsefuncs import (inplace_column_scale,
-                                 mean_variance_axis, incr_mean_variance_axis,
-                                 min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES, _deprecate_positional_args)
 
-from ._csr_polynomial_expansion import _csr_polynomial_expansion
-
-from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -43,7 +35,6 @@ __all__ = [
     'MinMaxScaler',
     'MaxAbsScaler',
     'Normalizer',
-    'OneHotEncoder',
     'RobustScaler',
     'StandardScaler',
     'QuantileTransformer',
