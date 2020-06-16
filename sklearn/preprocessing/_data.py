@@ -131,6 +131,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
     """  # noqa
+    output_type = get_input_type(X)
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     estimator='the scale function', dtype=FLOAT_DTYPES,
                     force_all_finite='allow-nan')
@@ -187,6 +188,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                                   "deviation of the data is probably "
                                   "very close to 0. ")
                     Xr -= mean_2
+    
+    X = to_output_type(X, output_type)
     return X
 
 
@@ -494,6 +497,8 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
+
+    output_type = get_input_type(X)
     X = check_array(X, copy=False, ensure_2d=False,
                     dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
     original_ndim = X.ndim
@@ -510,6 +515,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     if original_ndim == 1:
         X = X.ravel()
 
+    X = to_output_type(X, output_type)
     return X
 
 
@@ -1730,6 +1736,7 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     else:
         raise ValueError("'%d' is not a supported axis" % axis)
 
+    output_type = get_input_type(X)
     X = check_array(X, accept_sparse=sparse_format, copy=copy,
                     estimator='the normalize function', dtype=FLOAT_DTYPES)
     if axis == 0:
@@ -1763,7 +1770,9 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     if axis == 0:
         X = X.T
 
+    X = to_output_type(X, output_type)
     if return_norm:
+        norms = to_output_type(norms, output_type)
         return X, norms
     else:
         return X
