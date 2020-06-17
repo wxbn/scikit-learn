@@ -11,10 +11,10 @@ Extended math utilities.
 #          Giorgio Patrini
 # License: BSD 3 clause
 
-import warnings
 
-import numpy as np
-from scipy import linalg, sparse
+import cupy as np
+import cupyx
+from cupy import sparse
 
 from .validation import _deprecate_positional_args
 
@@ -42,7 +42,7 @@ def row_norms(X, squared=False):
     if sparse.issparse(X):
         if not isinstance(X, sparse.csr_matrix):
             X = sparse.csr_matrix(X)
-        norms = csr_row_norms(X)
+        # norms = csr_row_norms(X)
     else:
         norms = np.einsum('ij,ij->i', X, X)
 
@@ -115,7 +115,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
             _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
         last_unnormalized_variance = last_variance * last_sample_count
 
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with cupyx.errstate(divide=None, invalid=None):
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
                 last_unnormalized_variance + new_unnormalized_variance +

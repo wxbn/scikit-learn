@@ -18,13 +18,8 @@ import scipy.sparse as sp
 from distutils.version import LooseVersion
 from inspect import signature, isclass, Parameter
 
-from numpy.core.numeric import ComplexWarning
 import joblib
 
-from contextlib import suppress
-
-#from .fixes import _object_dtype_isnan
-#from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
@@ -81,8 +76,6 @@ def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
     # validation is also imported in extmath
     from .extmath import _safe_accumulator_op
 
-    if _get_config()['assume_finite']:
-        return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
@@ -101,10 +94,6 @@ def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
                     (type_err,
                      msg_dtype if msg_dtype is not None else X.dtype)
             )
-    # for object dtype data, we only check for NaNs (GH-13254)
-    elif X.dtype == np.dtype('object') and not allow_nan:
-        if _object_dtype_isnan(X).any():
-            raise ValueError("Input contains NaN")
 
 
 @_deprecate_positional_args

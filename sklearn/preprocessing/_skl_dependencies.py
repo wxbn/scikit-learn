@@ -7,16 +7,12 @@ Used for VotingClassifier
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
-import copy
 import warnings
 from collections import defaultdict
-import platform
 import inspect
 import re
 
-import numpy as np
-
-from ..utils.validation import check_X_y, _deprecate_positional_args
+from ..utils.validation import check_X_y
 from ...thirdparty_adapters import check_array
 
 

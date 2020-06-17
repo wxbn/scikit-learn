@@ -25,6 +25,7 @@ from ._data import power_transform
 from ._data import PowerTransformer
 from ._data import PolynomialFeatures
 
+from ._imputation import SimpleImputer
 
 __all__ = [
     'Binarizer',
@@ -43,6 +44,7 @@ __all__ = [
     'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
+    'SimpleImputer',
     'add_dummy_feature',
     'PolynomialFeatures',
     'binarize',

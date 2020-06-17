@@ -20,13 +20,15 @@ import numpy as np
 
 
 np_X_cl, np_y_cl = make_classification(n_samples=500,
-                                 n_features=20,
-                                 n_clusters_per_class=1,
-                                 n_informative=12,
-                                 random_state=123, n_classes=5)
+                                       n_features=20,
+                                       n_clusters_per_class=1,
+                                       n_informative=12,
+                                       random_state=123, n_classes=5)
 
 np_X_int = np.random.randint(100, size=(500, 20)).astype(np.float64)
-np_X_int.ravel()[np.random.choice(np_X_int.size, int(np_X_int.size*0.02), replace=False)] = np.nan
+np_X_int.ravel()[np.random.choice(np_X_int.size,
+                                  int(np_X_int.size*0.02),
+                                  replace=False)] = np.nan
 
 
 @pytest.fixture(scope="session",
@@ -45,7 +47,8 @@ def small_int_dataset(request):
     return np_X_int, X
 
 
-def assert_array_equal(x, y, mean_diff_tol=0.0, max_diff_tol=None, ratio_diff_tol=None):
+def assert_array_equal(x, y, mean_diff_tol=0.0, max_diff_tol=None,
+                       ratio_diff_tol=None):
     if x.shape != y.shape:
         raise ValueError('Shape mismatch')
 
@@ -56,7 +59,11 @@ def assert_array_equal(x, y, mean_diff_tol=0.0, max_diff_tol=None, ratio_diff_to
     max_diff = np.nanmax(diff)
     ratio_diff = np.nansum(diff != 0) / n_elements
 
-    if (mean_diff_tol != None and mean_diff > mean_diff_tol) or \
-       (max_diff_tol != None and max_diff > max_diff_tol) or \
-       (ratio_diff_tol != None and ratio_diff > ratio_diff_tol):
-        raise ValueError('Too much difference:\n\tMean diff: {}\n\tMax diff: {}\n\tRatio of diff: {}'.format(mean_diff, max_diff, ratio_diff))
+    if (mean_diff_tol is not None and mean_diff > mean_diff_tol) or \
+       (max_diff_tol is not None and max_diff > max_diff_tol) or \
+       (ratio_diff_tol is not None and ratio_diff > ratio_diff_tol):
+        err_msg = """Too much difference:\n\t
+                     Mean diff: {}\n\t
+                     Max diff: {}\n\t
+                     Ratio of diff: {}"""
+        raise ValueError(err_msg.format(mean_diff, max_diff, ratio_diff))

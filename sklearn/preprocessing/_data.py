@@ -13,9 +13,7 @@ import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
-import numpy as cpu_np
 import cupy as np
-import cupyx
 from cupy import sparse
 from scipy import stats
 from scipy import optimize
@@ -135,6 +133,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     estimator='the scale function', dtype=FLOAT_DTYPES,
                     force_all_finite='allow-nan')
+
+    """
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -147,7 +147,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
             inplace_column_scale(X, 1 / np.sqrt(var))
-    else:
+    """
+    if not sparse.issparse(X):
         X = np.asarray(X)
         if with_mean:
             mean_ = np.nanmean(X, axis)
@@ -188,7 +189,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                                   "deviation of the data is probably "
                                   "very close to 0. ")
                     Xr -= mean_2
-    
+
     X = to_output_type(X, output_type)
     return X
 
@@ -714,6 +715,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             self.n_samples_seen_ = np.repeat(
                 self.n_samples_seen_, X.shape[1]).astype(np.int64, copy=False)
 
+        """
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -746,7 +748,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 self.var_ = None
                 if hasattr(self, 'scale_'):
                     self.n_samples_seen_ += X.shape[0] - counts_nan
-        else:
+        """
+        if not sparse.issparse(X):
             if not hasattr(self, 'n_samples_seen_'):
                 self.n_samples_seen_ = np.zeros(X.shape[1], dtype=np.int64)
 
@@ -802,6 +805,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                                 estimator=self, dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan')
 
+        """
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -809,7 +813,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                     "instead. See docstring for motivation and alternatives.")
             if self.scale_ is not None:
                 inplace_column_scale(X, 1 / self.scale_)
-        else:
+        """
+        if not sparse.issparse(X):
             if self.with_mean:
                 X -= self.mean_
             if self.with_std:
@@ -842,6 +847,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
+        """
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -854,7 +860,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 X = X.copy()
             if self.scale_ is not None:
                 inplace_column_scale(X, self.scale_)
-        else:
+        """
+        if not sparse.issparse(X):
             X = np.asarray(X)
             if copy:
                 X = X.copy()
@@ -990,10 +997,12 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
                                 dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan')
 
+        """
         if sparse.issparse(X):
             mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
             max_abs = np.maximum(np.abs(mins), np.abs(maxs))
-        else:
+        """
+        if not sparse.issparse(X):
             max_abs = np.nanmax(np.abs(X), axis=0)
 
         if first_pass:
@@ -1021,9 +1030,11 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
+        """
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
-        else:
+        """
+        if not sparse.issparse(X):
             X /= self.scale_
 
         X = to_output_type(X, output_type)
@@ -1044,9 +1055,11 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
+        """
         if sparse.issparse(X):
             inplace_column_scale(X, self.scale_)
-        else:
+        """
+        if not sparse.issparse(X):
             X *= self.scale_
 
         X = to_output_type(X, output_type)
@@ -1278,10 +1291,12 @@ class RobustScaler(TransformerMixin, BaseEstimator):
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
+        """
         if sparse.issparse(X):
             if self.with_scaling:
                 inplace_column_scale(X, 1.0 / self.scale_)
-        else:
+        """
+        if not sparse.issparse(X):
             if self.with_centering:
                 X -= self.center_
             if self.with_scaling:
@@ -1301,10 +1316,12 @@ class RobustScaler(TransformerMixin, BaseEstimator):
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
+        """
         if sparse.issparse(X):
             if self.with_scaling:
                 inplace_column_scale(X, self.scale_)
-        else:
+        """
+        if not sparse.issparse(X):
             if self.with_scaling:
                 X *= self.scale_
             if self.with_centering:
@@ -1583,6 +1600,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         if n_features != self.n_input_features_:
             raise ValueError("X shape does not match training shape")
 
+        """
         if sparse.isspmatrix_csr(X):
             if self.degree > 3:
                 return self.transform(X.tocsc()).tocsr()
@@ -1599,7 +1617,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     break
                 to_stack.append(Xp_next)
             XP = sparse.hstack(to_stack, format='csr')
-        elif sparse.isspmatrix_csc(X) and self.degree < 4:
+        """
+        if sparse.isspmatrix_csc(X) and self.degree < 4:
             return self.transform(X.tocsr()).tocsc()
         else:
             if sparse.isspmatrix(X):
@@ -1742,6 +1761,7 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     if axis == 0:
         X = X.T
 
+    """
     if sparse.issparse(X):
         if return_norm and norm in ('l1', 'l2'):
             raise NotImplementedError("return_norm=True is not implemented "
@@ -1757,7 +1777,8 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
             norms_elementwise = norms.repeat(np.diff(X.indptr))
             mask = norms_elementwise != 0
             X.data[mask] /= norms_elementwise[mask]
-    else:
+    """
+    if not sparse.issparse(X):
         if norm == 'l1':
             norms = np.abs(X).sum(axis=1)
         elif norm == 'l2':
