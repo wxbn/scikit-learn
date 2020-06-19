@@ -26,6 +26,10 @@ from ..utils.extmath import _incremental_mean_and_var
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES, _deprecate_positional_args)
 
+from ..utils.sparsefuncs import (inplace_column_scale,
+                                 mean_variance_axis, incr_mean_variance_axis,
+                                 min_max_axis)
+
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -357,10 +361,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         if feature_range[0] >= feature_range[1]:
             raise ValueError("Minimum of desired feature range must be smaller"
                              " than maximum. Got %s." % str(feature_range))
-
-        if sparse.issparse(X):
-            raise TypeError("MinMaxScaler does not support sparse input. "
-                            "Consider using MaxAbsScaler instead.")
 
         first_pass = not hasattr(self, 'n_samples_seen_')
         X = self._validate_data(X, reset=first_pass,
@@ -997,12 +997,10 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
                                 dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan')
 
-        """
         if sparse.issparse(X):
             mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
             max_abs = np.maximum(np.abs(mins), np.abs(maxs))
-        """
-        if not sparse.issparse(X):
+        else:
             max_abs = np.nanmax(np.abs(X), axis=0)
 
         if first_pass:
@@ -1030,11 +1028,9 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
-        """
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
-        """
-        if not sparse.issparse(X):
+        else:
             X /= self.scale_
 
         X = to_output_type(X, output_type)
@@ -1055,11 +1051,9 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
-        """
         if sparse.issparse(X):
             inplace_column_scale(X, self.scale_)
-        """
-        if not sparse.issparse(X):
+        else:
             X *= self.scale_
 
         X = to_output_type(X, output_type)

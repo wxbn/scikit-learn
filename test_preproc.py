@@ -22,6 +22,7 @@ from .sklearn.preprocessing import PolynomialFeatures
 
 from .thirdparty_adapters import to_output_type
 from .test_preproc_utils import small_clf_dataset  # noqa: F401
+from .test_preproc_utils import small_sparse_dataset  # noqa: F401
 from .test_preproc_utils import small_int_dataset  # noqa: F401
 from .test_preproc_utils import assert_array_equal
 
@@ -139,6 +140,30 @@ def test_maxabs_scaler(small_clf_dataset):  # noqa: F811
 
     reversed_X = scaler.inverse_transform(transformed_X)
     assert_array_equal(reversed_X, np_X, mean_diff_tol=0.0001,
+                       max_diff_tol=0.0001)
+
+
+def test_sparse_maxabs_scaler(small_sparse_dataset):  # noqa: F811
+    np_X, X_sp = small_sparse_dataset
+
+    scaler = MaxAbsScaler(copy=True)
+    t_X = scaler.fit_transform(X_sp)
+    r_X = scaler.inverse_transform(t_X)
+
+    assert str(type(X_sp)) == str(type(t_X))
+    assert str(type(X_sp)) == str(type(r_X))
+
+    t_X = to_output_type(t_X, 'numpy')
+    r_X = to_output_type(r_X, 'numpy')
+
+    max_abs = np.nanmax(np.abs(np_X), axis=0)
+    max_abs[max_abs == 0.0] = 1.0
+    t_np_X = np_X / max_abs
+
+    assert_array_equal(t_X, t_np_X, mean_diff_tol=0.0001,
+                       max_diff_tol=0.0001)
+
+    assert_array_equal(r_X, np_X, mean_diff_tol=0.0001,
                        max_diff_tol=0.0001)
 
 
