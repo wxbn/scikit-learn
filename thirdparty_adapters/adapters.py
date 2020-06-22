@@ -19,6 +19,7 @@ from cuml.common import input_to_cuml_array
 from cupy.sparse import csr_matrix as gpu_csr_matrix
 from cupy.sparse import csc_matrix as gpu_csc_matrix
 from scipy.sparse import csr_matrix as cpu_csr_matrix
+from scipy.sparse import csc_matrix as cpu_csc_matrix
 from scipy import sparse as cpu_sparse
 from cupy import sparse as gpu_sparse
 
@@ -41,10 +42,28 @@ numeric_types = [
 
 
 def check_sparse(array, accept_sparse):
+    def display_error():
+        err_msg = "This algorithm does not support the sparse input in the current configuration."
+        raise ValueError(err_msg)
+
     if cpu_sparse.issparse(array) or gpu_sparse.issparse(array):
         if not accept_sparse:
-            err_msg = "This algorithm does not support sparse matrices."
-            raise ValueError(err_msg)
+            display_error()
+
+        if isinstance(array, cpu_csr_matrix) or\
+           isinstance(array, gpu_csr_matrix):
+           sptype = 'csr'
+        elif isinstance(array, cpu_csc_matrix) or\
+             isinstance(array, gpu_csc_matrix):
+           sptype = 'csc'
+        else:
+            sptype = 'other'
+
+        if type(accept_sparse) is list:
+            if sptype not in accept_sparse:
+                display_error()
+        elif sptype != accept_sparse:
+            display_error()
 
 
 def check_f16(dtype):
@@ -81,16 +100,16 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             array = gpu_csr_matrix(array)
         else:
             array = gpu_csc_matrix(array)
-        check_finite(array, force_all_finite)
+        check_finite(array.data, force_all_finite)
         return array
 
     if gpu_sparse.issparse(array):
         check_dtype(array.dtype, dtype)
-        check_finite(array, force_all_finite)
         if isinstance(array, gpu_csr_matrix):
             array = gpu_csr_matrix(array, copy=True)
         else:
             array = gpu_csc_matrix(array, copy=True)
+        check_finite(array.data, force_all_finite)
         return array
 
     X, n_rows, n_cols, dtype = input_to_cuml_array(array,

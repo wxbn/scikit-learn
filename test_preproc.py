@@ -27,6 +27,8 @@ from .test_preproc_utils import small_int_dataset  # noqa: F401
 from .test_preproc_utils import assert_array_equal
 
 import numpy as np
+from scipy import sparse as cpu_sp
+from cupy import sparse as gpu_sp
 
 import operator as op
 from functools import reduce
@@ -190,6 +192,42 @@ def test_normalize(small_clf_dataset, norm, return_norm):  # noqa: F811
     else:
         t_X = normalize(X, axis=0, norm=norm, return_norm=return_norm)
     assert str(type(X)) == str(type(t_X))
+    t_X = to_output_type(t_X, 'numpy')
+
+    assert_array_equal(t_X, t_np_X, mean_diff_tol=0.0001, max_diff_tol=0.0001)
+
+
+@pytest.mark.parametrize("norm", ['l1', 'l2', 'max'])
+def test_sparse_normalize(small_sparse_dataset, norm):  # noqa: F811
+    np_X, X_sp = small_sparse_dataset
+
+    def iscsc(X):
+        return isinstance(X_sp, cpu_sp.csc_matrix) or\
+               isinstance(X_sp, gpu_sp.csc_matrix)
+
+    if iscsc(X_sp):
+        axis = 0
+    else:
+        axis = 1
+
+    if norm == 'l1':
+        norms = np.abs(np_X).sum(axis=axis)
+    elif norm == 'l2':
+        norms = np.linalg.norm(np_X, ord=2, axis=axis)
+    elif norm == 'max':
+        norms = np.max(abs(np_X), axis=axis)
+
+    t_np_X = np.array(np_X, copy=True)
+
+    if iscsc(X_sp):
+        t_np_X /= norms
+    else:
+        t_np_X = t_np_X.T
+        t_np_X /= norms
+        t_np_X = t_np_X.T
+
+    t_X = normalize(X_sp, axis=axis, norm=norm)
+    assert str(type(X_sp)) == str(type(t_X))
     t_X = to_output_type(t_X, 'numpy')
 
     assert_array_equal(t_X, t_np_X, mean_diff_tol=0.0001, max_diff_tol=0.0001)

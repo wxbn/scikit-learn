@@ -83,10 +83,11 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n):
     return updated_mean, updated_var, updated_n
 
 
-def _inplace_csr_row_normalize_l1(X):
+def inplace_csr_row_normalize_l1(X):
     start = X.indptr[0]
-    for i, end in enumerate(X.indptr[1:]):
+    for end in X.indptr[1:]:
         col = X.data[start:end]
+        col = abs(col)
         sum_ = col.sum()
         X.data[start:end] /= sum_
         start = end
@@ -94,9 +95,9 @@ def _inplace_csr_row_normalize_l1(X):
 
 def inplace_csr_row_normalize_l2(X):
     start = X.indptr[0]
-    for i, end in enumerate(X.indptr[1:]):
+    for end in X.indptr[1:]:
         col = X.data[start:end]
-        col = col.square()
+        col = cp.square(col)
         sum_ = col.sum()
-        X.data[start:end] /= sqrt(sum_)
+        X.data[start:end] /= cp.sqrt(sum_)
         start = end

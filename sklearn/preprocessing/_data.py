@@ -30,6 +30,9 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  mean_variance_axis, incr_mean_variance_axis,
                                  min_max_axis)
 
+from ...thirdparty_adapters.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
+                                                     inplace_csr_row_normalize_l2)
+
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -1752,10 +1755,10 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     output_type = get_input_type(X)
     X = check_array(X, accept_sparse=sparse_format, copy=copy,
                     estimator='the normalize function', dtype=FLOAT_DTYPES)
+    
     if axis == 0:
         X = X.T
 
-    """
     if sparse.issparse(X):
         if return_norm and norm in ('l1', 'l2'):
             raise NotImplementedError("return_norm=True is not implemented "
@@ -1768,11 +1771,10 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
         elif norm == 'max':
             mins, maxes = min_max_axis(X, 1)
             norms = np.maximum(abs(mins), maxes)
-            norms_elementwise = norms.repeat(np.diff(X.indptr))
+            norms_elementwise = norms.repeat(np.diff(X.indptr).tolist())
             mask = norms_elementwise != 0
             X.data[mask] /= norms_elementwise[mask]
-    """
-    if not sparse.issparse(X):
+    else:
         if norm == 'l1':
             norms = np.abs(X).sum(axis=1)
         elif norm == 'l2':

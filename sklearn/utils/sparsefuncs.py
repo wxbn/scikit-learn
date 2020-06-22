@@ -76,9 +76,7 @@ def inplace_csr_row_scale(X, scale):
         Array of precomputed sample-wise values to use for scaling.
     """
     assert scale.shape[0] == X.shape[0]
-    print('X.data', X.data)
-    X.data *= np.repeat(scale, np.diff(X.indptr).get().tolist())
-    print('X.data', X.data)
+    X.data *= np.repeat(scale, np.diff(X.indptr).tolist())
 
 
 def mean_variance_axis(X, axis):
@@ -373,7 +371,7 @@ def _minor_reduce(X, min_or_max):
     # Reinitializing prevents this where possible, see #13737
     X = type(X)((X.data, X.indices, X.indptr), shape=X.shape)
 
-    value = cpu_np.zeros(X.shape[1], dtype=X.dtype)
+    value = cpu_np.zeros(len(X.indptr)-1, dtype=X.dtype)
 
     start = X.indptr[0]
     for i, end in enumerate(X.indptr[1:]):
