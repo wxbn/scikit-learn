@@ -14,7 +14,6 @@ import warnings
 import numbers
 
 import numpy as np
-import cupy as cp
 import scipy.sparse as sp
 from distutils.version import LooseVersion
 from inspect import signature, isclass, Parameter
@@ -30,6 +29,7 @@ from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from ..utils.array_creation import asarray, asanyarray
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -83,8 +83,7 @@ def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
 
     if _get_config()['assume_finite']:
         return
-    if not isinstance(X, cp.ndarray):
-        X = np.asanyarray(X)
+    X = asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
     # false positives from overflow in sum method. The sum is also calculated
@@ -599,8 +598,7 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                                            msg_dtype=dtype)
                     array = array.astype(dtype, casting="unsafe", copy=False)
                 else:
-                    if not isinstance(array, cp.ndarray):
-                        array = np.asarray(array, order=order, dtype=dtype)
+                    array = asarray(array, order=order, dtype=dtype)
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"
                                  "{}\n".format(array))

@@ -8,7 +8,6 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.array_creation import zeros_like, ones_like
-from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
