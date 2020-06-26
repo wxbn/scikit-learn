@@ -2526,3 +2526,25 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
     scaler = StandardScaler(with_mean=False)
     scaler.fit(X_1).partial_fit(X_2)
     assert np.isfinite(scaler.var_[0])
+
+
+def test_minmax_scaler_cupy():
+    cp = pytest.importorskip("cupy")
+    X_np = iris.data
+    X_cp = cp.asarray(X_np)
+
+    scaler = MinMaxScaler(copy=True)
+    t_X_cp = scaler.fit_transform(X_cp)
+    assert type(t_X_cp) == type(X_cp)
+
+    r_X_cp = scaler.inverse_transform(t_X_cp)
+    assert type(r_X_cp) == type(t_X_cp)
+
+    r_X_cp = cp.asnumpy(r_X_cp)
+    assert_almost_equal(r_X_cp, X_np, decimal=3)
+
+    scaler = MinMaxScaler(copy=True)
+    t_X_np = scaler.fit_transform(X_np)
+
+    t_X_cp = cp.asnumpy(t_X_cp)
+    assert_almost_equal(t_X_cp, t_X_np, decimal=3)

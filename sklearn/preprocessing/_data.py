@@ -14,6 +14,7 @@ import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
+import cupy as cp
 from scipy import sparse
 from scipy import stats
 from scipy import optimize
@@ -71,7 +72,7 @@ def _handle_zeros_in_scale(scale, copy=True):
         if scale == .0:
             scale = 1.
         return scale
-    elif isinstance(scale, np.ndarray):
+    elif isinstance(scale, (np.ndarray, cp.ndarray)):
         if copy:
             # New array to avoid side-effects
             scale = scale.copy()
