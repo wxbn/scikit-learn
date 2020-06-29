@@ -43,23 +43,24 @@ numeric_types = [
 
 def check_sparse(array, accept_sparse):
     def display_error():
-        err_msg = "This algorithm does not support the sparse input in the current configuration."
+        err_msg = "This algorithm does not support the sparse \
+                   input in the current configuration."
         raise ValueError(err_msg)
-
     if cpu_sparse.issparse(array) or gpu_sparse.issparse(array):
-        if not accept_sparse:
+        if accept_sparse is False:
             display_error()
 
-        if isinstance(array, cpu_csr_matrix) or\
-           isinstance(array, gpu_csr_matrix):
-           sptype = 'csr'
-        elif isinstance(array, cpu_csc_matrix) or\
-             isinstance(array, gpu_csc_matrix):
-           sptype = 'csc'
+        if accept_sparse is True:
+            return
+
+        if isinstance(array, (cpu_csr_matrix, gpu_csr_matrix)):
+            sptype = 'csr'
+        elif isinstance(array, (cpu_csc_matrix, gpu_csc_matrix)):
+            sptype = 'csc'
         else:
             sptype = 'other'
 
-        if type(accept_sparse) is list:
+        if isinstance(accept_sparse, (tuple, list)):
             if sptype not in accept_sparse:
                 display_error()
         elif sptype != accept_sparse:

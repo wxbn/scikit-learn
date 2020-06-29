@@ -27,11 +27,11 @@ from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES, _deprecate_positional_args)
 
 from ..utils.sparsefuncs import (inplace_column_scale,
-                                 mean_variance_axis, incr_mean_variance_axis,
                                  min_max_axis)
 
-from ...thirdparty_adapters.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
-                                                     inplace_csr_row_normalize_l2)
+from ...thirdparty_adapters.sparsefuncs_fast import \
+    (inplace_csr_row_normalize_l1, inplace_csr_row_normalize_l2,
+     csr_polynomial_expansion)
 
 
 BOUNDS_THRESHOLD = 1e-7
@@ -1597,7 +1597,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         if n_features != self.n_input_features_:
             raise ValueError("X shape does not match training shape")
 
-        """
         if sparse.isspmatrix_csr(X):
             if self.degree > 3:
                 return self.transform(X.tocsc()).tocsr()
@@ -1606,16 +1605,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
             to_stack.append(X)
             for deg in range(2, self.degree+1):
-                Xp_next = _csr_polynomial_expansion(X.data, X.indices,
-                                                    X.indptr, X.shape[1],
-                                                    self.interaction_only,
-                                                    deg)
+                Xp_next = csr_polynomial_expansion(X, self.interaction_only,
+                                                   deg)
                 if Xp_next is None:
                     break
                 to_stack.append(Xp_next)
             XP = sparse.hstack(to_stack, format='csr')
-        """
-        if sparse.isspmatrix_csc(X) and self.degree < 4:
+        elif sparse.isspmatrix_csc(X) and self.degree < 4:
             return self.transform(X.tocsr()).tocsc()
         else:
             if sparse.isspmatrix(X):
@@ -1755,7 +1751,7 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     output_type = get_input_type(X)
     X = check_array(X, accept_sparse=sparse_format, copy=copy,
                     estimator='the normalize function', dtype=FLOAT_DTYPES)
-    
+
     if axis == 0:
         X = X.T
 

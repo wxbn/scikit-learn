@@ -310,3 +310,31 @@ def test_poly_features(small_clf_dataset, degree,  # noqa: F811
         assert n_outputs == n_combinations
     else:
         assert n_outputs > n_combinations
+
+
+@pytest.mark.parametrize("degree", [2, 3])
+@pytest.mark.parametrize("interaction_only", [True, False])
+@pytest.mark.parametrize("include_bias", [True, False])
+@pytest.mark.parametrize("order", ['C', 'F'])
+def test_sparse_poly_features(small_sparse_dataset, degree,  # noqa: F811
+                              interaction_only, include_bias, order):
+    np_X, X_sp = small_sparse_dataset
+
+    polyfeatures = PolynomialFeatures(degree=degree, order=order,
+                                      interaction_only=interaction_only,
+                                      include_bias=include_bias)
+    t_X_sp = polyfeatures.fit_transform(X_sp)
+    assert str(type(X_sp)) == str(type(t_X_sp))
+
+    t_X = to_output_type(t_X_sp, 'numpy')
+
+    n_features = np_X.shape[1]
+
+    start = 0 if include_bias else 1
+    n_combinations = sum(ncr(n_features, i) for i in range(start, degree+1))
+
+    n_outputs = t_X.shape[1]
+    if interaction_only:
+        assert n_outputs == n_combinations
+    else:
+        assert n_outputs > n_combinations
