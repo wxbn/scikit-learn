@@ -24,11 +24,11 @@ from .thirdparty_adapters import to_output_type
 from .test_preproc_utils import small_clf_dataset  # noqa: F401
 from .test_preproc_utils import small_sparse_dataset  # noqa: F401
 from .test_preproc_utils import small_int_dataset  # noqa: F401
-from .test_preproc_utils import assert_array_equal
 
 import numpy as np
 from scipy import sparse as cpu_sp
 from cupy import sparse as gpu_sp
+from numpy.testing import assert_allclose
 
 import operator as op
 from functools import reduce
@@ -52,14 +52,10 @@ def test_minmax_scaler(small_clf_dataset):  # noqa: F811
     assert type(r_X) == type(t_X)
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
     r_X = to_output_type(r_X, 'numpy')
-    assert_array_equal(r_X, X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(r_X, X_np, rtol=0.0001, atol=0.0001)
 
 
 def test_minmax_scale(small_clf_dataset):  # noqa: F811
@@ -76,9 +72,7 @@ def test_minmax_scale(small_clf_dataset):  # noqa: F811
     t_X_np = X_np * scale + mini
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
 
 @pytest.mark.parametrize("with_mean", [True, False])
@@ -100,14 +94,10 @@ def test_standard_scaler(small_clf_dataset, with_mean, with_std):  # noqa: F811
     assert type(r_X) == type(t_X)
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
     r_X = to_output_type(r_X, 'numpy')
-    assert_array_equal(r_X, X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(r_X, X_np, rtol=0.0001, atol=0.0001)
 
 
 @pytest.mark.parametrize("with_mean", [True, False])
@@ -125,9 +115,7 @@ def test_scale(small_clf_dataset, with_mean, with_std):  # noqa: F811
         t_X_np /= t_X_np.std(axis=0)
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
 
 def test_maxabs_scaler(small_clf_dataset):  # noqa: F811
@@ -145,14 +133,10 @@ def test_maxabs_scaler(small_clf_dataset):  # noqa: F811
     assert type(r_X) == type(t_X)
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
     r_X = to_output_type(r_X, 'numpy')
-    assert_array_equal(r_X, X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(r_X, X_np, rtol=0.0001, atol=0.0001)
 
 
 def test_sparse_maxabs_scaler(small_sparse_dataset):  # noqa: F811
@@ -170,14 +154,10 @@ def test_sparse_maxabs_scaler(small_sparse_dataset):  # noqa: F811
     assert type(r_X) == type(t_X)
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
     r_X = to_output_type(r_X, 'numpy')
-    assert_array_equal(r_X, X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(r_X, X_np, rtol=0.0001, atol=0.0001)
 
 
 @pytest.mark.parametrize("norm", ['l1', 'l2', 'max'])
@@ -198,15 +178,13 @@ def test_normalize(small_clf_dataset, norm, return_norm):  # noqa: F811
     if return_norm:
         t_X, t_norms = normalize(X, axis=0, norm=norm, return_norm=return_norm)
         t_norms = to_output_type(t_norms, 'numpy')
-        assert_array_equal(t_norms, norms,
-                           mean_diff_tol=0.0001,
-                           max_diff_tol=0.0001)
+        assert_allclose(t_norms, norms, rtol=0.0001, atol=0.0001)
     else:
         t_X = normalize(X, axis=0, norm=norm, return_norm=return_norm)
     assert type(t_X) == type(X)
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np, mean_diff_tol=0.0001, max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
 
 @pytest.mark.parametrize("norm", ['l1', 'l2', 'max'])
@@ -242,9 +220,7 @@ def test_sparse_normalize(small_sparse_dataset, norm):  # noqa: F811
     assert type(t_X) == type(X)
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
 
 @pytest.mark.parametrize("strategy", ["mean", "most_frequent", "constant"])
@@ -279,9 +255,7 @@ def test_imputer(small_int_dataset, strategy):  # noqa: F811
     assert not np.isnan(t_X_np).any()
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
 
 @pytest.mark.parametrize("strategy", ["mean", "most_frequent", "constant"])
@@ -319,9 +293,7 @@ def test_sparse_imputer(small_sparse_dataset, strategy):  # noqa: F811
     assert not np.isnan(t_X_np).any()
 
     t_X = to_output_type(t_X, 'numpy')
-    assert_array_equal(t_X, t_X_np,
-                       mean_diff_tol=0.0001,
-                       max_diff_tol=0.0001)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
 
 
 def ncr(n, r):

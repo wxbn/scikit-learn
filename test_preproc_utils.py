@@ -71,25 +71,3 @@ def small_int_dataset(request):
     randint_sp_conv = input_to_cuml_array(randint_sp_np)[0]
     randint_sp_conv = randint_sp_conv.to_output(request.param)
     return randint_sp_np, randint_sp_conv
-
-
-def assert_array_equal(x, y, mean_diff_tol=0.0, max_diff_tol=None,
-                       ratio_diff_tol=None):
-    if x.shape != y.shape:
-        raise ValueError('Shape mismatch')
-
-    n_elements = x.size
-
-    diff = np.abs(x - y)
-    mean_diff = np.nanmean(diff)
-    max_diff = np.nanmax(diff)
-    ratio_diff = np.nansum(diff != 0) / n_elements
-
-    if (mean_diff_tol is not None and mean_diff > mean_diff_tol) or \
-       (max_diff_tol is not None and max_diff > max_diff_tol) or \
-       (ratio_diff_tol is not None and ratio_diff > ratio_diff_tol):
-        err_msg = """Too much difference:\n\t
-                     Mean diff: {}\n\t
-                     Max diff: {}\n\t
-                     Ratio of diff: {}"""
-        raise ValueError(err_msg.format(mean_diff, max_diff, ratio_diff))
