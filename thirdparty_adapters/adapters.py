@@ -43,8 +43,8 @@ numeric_types = [
 
 def check_sparse(array, accept_sparse):
     def display_error():
-        err_msg = "This algorithm does not support the sparse \
-                   input in the current configuration."
+        err_msg = "This algorithm does not support the sparse " + \
+                  "input in the current configuration."
         raise ValueError(err_msg)
     if cpu_sparse.issparse(array) or gpu_sparse.issparse(array):
         if accept_sparse is False:
@@ -75,8 +75,13 @@ def check_f16(dtype):
         raise NotImplementedError("Float16 not supported by cuML")
 
 
-def check_dtype(dtype, dtypes):
-    if dtype not in dtypes:
+def check_dtype(array, dtypes):
+    if dtypes is None:
+        return
+    if not isinstance(array, cuDataFrame):
+        if array.dtype not in dtypes:
+            raise ValueError("Wrong dtype")
+    elif any([dt not in dtypes for dt in array.dtypes.tolist()]):
         raise ValueError("Wrong dtype")
 
 
@@ -92,11 +97,11 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 warn_on_dtype=None, estimator=None):
 
     dtype = check_f16(dtype)
+    check_dtype(array, dtype)
 
     check_sparse(array, accept_sparse)
 
     if cpu_sparse.issparse(array):
-        check_dtype(array.dtype, dtype)
         if isinstance(array, cpu_csr_matrix):
             array = gpu_csr_matrix(array)
         else:
@@ -105,7 +110,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         return array
 
     if gpu_sparse.issparse(array):
-        check_dtype(array.dtype, dtype)
         if isinstance(array, gpu_csr_matrix):
             array = gpu_csr_matrix(array, copy=True)
         else:

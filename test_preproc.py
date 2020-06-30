@@ -271,6 +271,46 @@ def test_imputer(small_int_dataset, strategy):  # noqa: F811
                        mean_diff_tol=0.0001, max_diff_tol=0.0001)
 
 
+@pytest.mark.parametrize("strategy", ["mean", "most_frequent", "constant"])
+def test_sparse_imputer(small_sparse_dataset, strategy):  # noqa: F811
+    np_X, X_sp = small_sparse_dataset
+    if isinstance(X_sp, (cpu_sp.csr_matrix, gpu_sp.csr_matrix)):
+        pytest.skip("unsupported sparse matrix")
+
+    fill_value = np.random.randint(10, size=1)[0]
+
+    imputer = SimpleImputer(copy=True, strategy=strategy,
+                            fill_value=fill_value)
+    t_X = imputer.fit_transform(X_sp)
+    assert str(type(t_X)) == str(type(X_sp))
+
+    t_X = to_output_type(t_X, 'numpy')
+
+    t_np_X = np.array(np_X, copy=True)
+    n_features = t_np_X.shape[1]
+
+    if strategy == "mean":
+        mean = np.nanmean(t_np_X, axis=0)
+        for i in range(n_features):
+            mask = np.where(np.isnan(t_np_X[:, i]))
+            t_np_X[mask, i] = mean[i]
+    elif strategy == "most_frequent":
+        for i in range(n_features):
+            values, counts = np.unique(t_np_X[:, i], return_counts=True)
+            max_idx = np.argmax(counts)
+            most_frequent = values[max_idx]
+
+            mask = np.where(np.isnan(t_np_X[:, i]))
+            t_np_X[mask, i] = most_frequent
+    elif strategy == "constant":
+        t_np_X[np.where(np.isnan(t_np_X))] = fill_value
+
+    assert not np.isnan(t_np_X).any()
+
+    assert_array_equal(t_X, t_np_X,
+                       mean_diff_tol=0.0001, max_diff_tol=0.0001)
+
+
 def ncr(n, r):
     r = min(r, n-r)
     numer = reduce(op.mul, range(n, n-r, -1), 1)
