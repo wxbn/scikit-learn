@@ -158,7 +158,6 @@ def get_input_type(input):
 
 
 def to_output_type(array, output_type, order='F'):
-    print('output_type', output_type)
     if output_type == 'numpy_csr':
         return cpu_sparse.csr_matrix(array.get())
     if output_type == 'numpy_csc':

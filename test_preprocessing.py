@@ -19,6 +19,7 @@ from .sklearn.preprocessing import StandardScaler, MinMaxScaler, \
                     MaxAbsScaler, scale, minmax_scale, normalize
 from .sklearn.preprocessing import SimpleImputer
 from .sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import PolynomialFeatures as OriginalPolFeat
 
 from .thirdparty_adapters import to_output_type
 from .test_preproc_utils import small_clf_dataset  # noqa: F401
@@ -350,16 +351,17 @@ def test_sparse_poly_features(small_sparse_dataset, degree,  # noqa: F811
                                       include_bias=include_bias)
     t_X = polyfeatures.fit_transform(X)
     assert type(t_X) == type(X)
-
     t_X = to_output_type(t_X, 'numpy')
+    t_X = cpu_sp.csr_matrix(t_X)
 
-    n_features = X_np.shape[1]
+    polyfeatures = OriginalPolFeat(degree=degree, order=order,
+                                   interaction_only=interaction_only,
+                                   include_bias=include_bias)
+    X_sp = cpu_sp.csr_matrix(X_np)
+    orig_t_X = polyfeatures.fit_transform(X_sp)
+    orig_t_X = to_output_type(orig_t_X, 'numpy')
+    orig_t_X = cpu_sp.csr_matrix(orig_t_X)
 
-    start = 0 if include_bias else 1
-    n_combinations = sum(ncr(n_features, i) for i in range(start, degree+1))
-
-    n_outputs = t_X.shape[1]
-    if interaction_only:
-        assert n_outputs == n_combinations
-    else:
-        assert n_outputs > n_combinations
+    assert_allclose(orig_t_X.indptr, t_X.indptr, rtol=0.1, atol=0.1)
+    assert_allclose(orig_t_X.indices, t_X.indices, rtol=0.1, atol=0.1)
+    assert_allclose(orig_t_X.data, t_X.data, rtol=0.1, atol=0.1)
