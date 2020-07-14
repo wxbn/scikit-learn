@@ -18,7 +18,7 @@ import pytest
 from .sklearn.preprocessing import StandardScaler, MinMaxScaler, \
                     MaxAbsScaler, Normalizer
 from .sklearn.preprocessing import scale, minmax_scale, normalize, \
-                    add_dummy_feature
+                    add_dummy_feature, binarize
 from .sklearn.preprocessing import SimpleImputer
 from .sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import PolynomialFeatures as OriginalPolFeat
@@ -454,4 +454,36 @@ def test_add_dummy_feature_sparse(small_sparse_dataset, value):  # noqa: F811
     t_X = to_output_type(t_X, 'numpy')
 
     t_X_np = original_adf(X_np, value=value)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
+
+
+@pytest.mark.parametrize("threshold", [0., 1.])
+def test_binarize(small_clf_dataset, threshold):  # noqa: F811
+    X_np, X = small_clf_dataset
+
+    t_X = binarize(X, threshold=threshold, copy=True)
+    assert type(t_X) == type(X)
+    t_X = to_output_type(t_X, 'numpy')
+
+    t_X_np = np.array(X_np, copy=True)
+    cond = X_np > threshold
+    t_X_np[~cond] = 0
+    t_X_np[cond] = 1
+
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
+
+
+@pytest.mark.parametrize("threshold", [0., 1.])
+def test_binarize_sparse(small_sparse_dataset, threshold):  # noqa: F811
+    X_np, X = small_sparse_dataset
+
+    t_X = binarize(X, threshold=threshold, copy=True)
+    assert type(t_X) == type(X)
+    t_X = to_output_type(t_X, 'numpy')
+
+    t_X_np = np.array(X_np, copy=True)
+    cond = X_np > threshold
+    t_X_np[~cond] = 0
+    t_X_np[cond] = 1
+
     assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)

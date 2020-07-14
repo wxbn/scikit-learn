@@ -1923,6 +1923,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     Binarizer: Performs binarization using the ``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
+    output_type = get_input_type(X)
     X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
     if sparse.issparse(X):
         if threshold < 0:
@@ -1938,7 +1939,7 @@ def binarize(X, *, threshold=0.0, copy=True):
         not_cond = np.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0
-    return X
+    return to_output_type(X, output_type)
 
 
 class Binarizer(TransformerMixin, BaseEstimator):
