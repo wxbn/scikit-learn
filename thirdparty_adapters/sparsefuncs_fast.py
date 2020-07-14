@@ -22,22 +22,38 @@ from math import ceil
 
 def csr_mean_variance_axis0(X):
     X = X.tocsc()
-    return csc_mean_variance_axis0(X)
+    means, variances, _ = _csc_mean_variance_axis0(X)
+    return means, variances
 
 
 def csc_mean_variance_axis0(X):
-    n_features = X.shape[1]
+    means, variances, _ = _csc_mean_variance_axis0(X)
+    return means, variances
 
-    means = cp.zeros(n_features)
-    variances = cp.zeros(n_features)
-    counts_nan = cp.zeros(n_features)
+
+def _csc_mean_variance_axis0(X):
+    n_samples, n_features = X.shape
+
+    means = cp.empty(n_features)
+    variances = cp.empty(n_features)
+    counts_nan = cp.empty(n_features)
 
     start = X.indptr[0]
     for i, end in enumerate(X.indptr[1:]):
         col = X.data[start:end]
-        means[i] = col.mean()
-        variances[i] = col.var()
-        counts_nan[i] = X.nnz - cp.count_nonzero(cp.isnan(col))
+
+        _count_zeros = n_samples - col.size
+        _count_nans = (col != col).sum()
+
+        _mean = cp.nansum(col) / (n_samples - _count_nans)
+        _variance = cp.nansum((col - _mean) ** 2)
+        _variance += _count_zeros * (_mean ** 2)
+        _variance /= (n_samples - _count_nans)
+
+        means[i] = _mean
+        variances[i] = _variance
+        counts_nan[i] = _count_nans
+
         start = end
     return means, variances, counts_nan
 

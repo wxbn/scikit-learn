@@ -27,7 +27,8 @@ from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES, _deprecate_positional_args)
 
 from ..utils.sparsefuncs import (inplace_column_scale,
-                                 min_max_axis)
+                                 min_max_axis,
+                                 mean_variance_axis)
 
 from ...thirdparty_adapters.sparsefuncs_fast import \
     (inplace_csr_row_normalize_l1, inplace_csr_row_normalize_l2,
@@ -137,11 +138,10 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
 
     """  # noqa
     output_type = get_input_type(X)
-    X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
-                    estimator='the scale function', dtype=FLOAT_DTYPES,
-                    force_all_finite='allow-nan')
+    X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy,
+                    ensure_2d=False, estimator='the scale function',
+                    dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
 
-    """
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -152,10 +152,10 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                              " got axis=%d" % axis)
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
+            print("var test", var)
             var = _handle_zeros_in_scale(var, copy=False)
             inplace_column_scale(X, 1 / np.sqrt(var))
-    """
-    if not sparse.issparse(X):
+    else:
         X = np.asarray(X)
         if with_mean:
             mean_ = np.nanmean(X, axis)

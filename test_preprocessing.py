@@ -20,6 +20,7 @@ from .sklearn.preprocessing import StandardScaler, MinMaxScaler, \
 from .sklearn.preprocessing import SimpleImputer
 from .sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import PolynomialFeatures as OriginalPolFeat
+from sklearn.preprocessing import scale as orignalscale
 
 from .thirdparty_adapters import to_output_type
 from .test_preproc_utils import small_clf_dataset  # noqa: F401
@@ -117,6 +118,21 @@ def test_scale(small_clf_dataset, with_mean, with_std):  # noqa: F811
 
     t_X = to_output_type(t_X, 'numpy')
     assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
+
+
+@pytest.mark.parametrize("with_std", [True, False])
+def test_scale_sparse(small_sparse_dataset, with_std):  # noqa: F811
+    X_np, X = small_sparse_dataset
+
+    t_X = scale(X, copy=True, with_mean=False, with_std=with_std)
+    assert type(t_X) == type(X)
+
+    X_sp = cpu_sp.csr_matrix(X_np)
+    t_X_sp = orignalscale(X_sp, copy=True, with_mean=False, with_std=with_std)
+
+    t_X = to_output_type(t_X, 'numpy')
+    t_X_sp = t_X_sp.todense()
+    assert_allclose(t_X, t_X_sp, rtol=0.0001, atol=0.0001)
 
 
 def test_maxabs_scaler(small_clf_dataset):  # noqa: F811
