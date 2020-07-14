@@ -1883,9 +1883,11 @@ class Normalizer(TransformerMixin, BaseEstimator):
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
+        output_type = get_input_type(X)
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
-        return normalize(X, norm=self.norm, axis=1, copy=copy)
+        X = normalize(X, norm=self.norm, axis=1, copy=copy)
+        return to_output_type(X, output_type)
 
     def _more_tags(self):
         return {'stateless': True}

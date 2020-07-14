@@ -16,7 +16,7 @@
 import pytest
 
 from .sklearn.preprocessing import StandardScaler, MinMaxScaler, \
-                    MaxAbsScaler, scale, minmax_scale, normalize
+                    MaxAbsScaler, Normalizer, scale, minmax_scale, normalize
 from .sklearn.preprocessing import SimpleImputer
 from .sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import PolynomialFeatures as OriginalPolFeat
@@ -159,6 +159,31 @@ def test_sparse_maxabs_scaler(small_sparse_dataset):  # noqa: F811
 
     r_X = to_output_type(r_X, 'numpy')
     assert_allclose(r_X, X_np, rtol=0.0001, atol=0.0001)
+
+
+@pytest.mark.parametrize("norm", ['l1', 'l2', 'max'])
+def test_normalizer(small_sparse_dataset, norm):  # noqa: F811
+    X_np, X = small_sparse_dataset
+
+    if norm == 'l1':
+        norms = np.abs(X_np).sum(axis=1)
+    elif norm == 'l2':
+        norms = np.linalg.norm(X_np, ord=2, axis=1)
+    elif norm == 'max':
+        norms = np.max(abs(X_np), axis=1)
+
+    t_X_np = np.array(X_np, copy=True)
+    t_X_np /= norms[:, np.newaxis]
+
+    try:
+        normalizer = Normalizer(norm=norm, copy=True)
+        t_X = normalizer.fit_transform(X)
+        assert type(t_X) == type(X)
+
+        t_X = to_output_type(t_X, 'numpy')
+        assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
+    except ValueError:
+        pytest.skip("Skipping CSC matrices")
 
 
 @pytest.mark.parametrize("norm", ['l1', 'l2', 'max'])
