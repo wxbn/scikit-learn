@@ -2163,6 +2163,7 @@ def add_dummy_feature(X, value=1.0):
     array([[1., 0., 1.],
            [1., 1., 0.]])
     """
+    output_type = get_input_type(X)
     X = check_array(X, accept_sparse=['csc', 'csr', 'coo'], dtype=FLOAT_DTYPES)
     n_samples, n_features = X.shape
     shape = (n_samples, n_features + 1)
@@ -2176,7 +2177,8 @@ def add_dummy_feature(X, value=1.0):
             row = np.concatenate((np.arange(n_samples), X.row))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.full(n_samples, value), X.data))
-            return sparse.coo_matrix((data, (row, col)), shape)
+            X = sparse.coo_matrix((data, (row, col)), shape)
+            return to_output_type(X, output_type)
         elif sparse.isspmatrix_csc(X):
             # Shift index pointers since we need to add n_samples elements.
             indptr = X.indptr + n_samples
@@ -2186,12 +2188,15 @@ def add_dummy_feature(X, value=1.0):
             indices = np.concatenate((np.arange(n_samples), X.indices))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.full(n_samples, value), X.data))
-            return sparse.csc_matrix((data, indices, indptr), shape)
+            X = sparse.csc_matrix((data, indices, indptr), shape)
+            return to_output_type(X, output_type)
         else:
             klass = X.__class__
-            return klass(add_dummy_feature(X.tocoo(), value))
+            X = klass(add_dummy_feature(X.tocoo(), value))
+            return to_output_type(X, output_type)
     else:
-        return np.hstack((np.full((n_samples, 1), value), X))
+        X = np.hstack((np.full((n_samples, 1), value), X))
+        return to_output_type(X, output_type)
 
 
 class QuantileTransformer(TransformerMixin, BaseEstimator):

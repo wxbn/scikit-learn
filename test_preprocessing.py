@@ -16,11 +16,14 @@
 import pytest
 
 from .sklearn.preprocessing import StandardScaler, MinMaxScaler, \
-                    MaxAbsScaler, Normalizer, scale, minmax_scale, normalize
+                    MaxAbsScaler, Normalizer
+from .sklearn.preprocessing import scale, minmax_scale, normalize, \
+                    add_dummy_feature
 from .sklearn.preprocessing import SimpleImputer
 from .sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import PolynomialFeatures as OriginalPolFeat
-from sklearn.preprocessing import scale as orignalscale
+from sklearn.preprocessing import scale as orignal_scale
+from sklearn.preprocessing import add_dummy_feature as original_adf
 
 from .thirdparty_adapters import to_output_type
 from .test_preproc_utils import small_clf_dataset  # noqa: F401
@@ -150,7 +153,7 @@ def test_scale_sparse(small_sparse_dataset, with_std):  # noqa: F811
     assert type(t_X) == type(X)
 
     X_sp = cpu_sp.csr_matrix(X_np)
-    t_X_sp = orignalscale(X_sp, copy=True, with_mean=False, with_std=with_std)
+    t_X_sp = orignal_scale(X_sp, copy=True, with_mean=False, with_std=with_std)
 
     t_X = to_output_type(t_X, 'numpy')
     t_X_sp = t_X_sp.todense()
@@ -428,3 +431,27 @@ def test_sparse_poly_features(small_sparse_dataset, degree,  # noqa: F811
     assert_allclose(orig_t_X.indptr, t_X.indptr, rtol=0.1, atol=0.1)
     assert_allclose(orig_t_X.indices, t_X.indices, rtol=0.1, atol=0.1)
     assert_allclose(orig_t_X.data, t_X.data, rtol=0.1, atol=0.1)
+
+
+@pytest.mark.parametrize("value", [1.0, 42])
+def test_add_dummy_feature(small_clf_dataset, value):  # noqa: F811
+    X_np, X = small_clf_dataset
+
+    t_X = add_dummy_feature(X, value=value)
+    assert type(t_X) == type(X)
+    t_X = to_output_type(t_X, 'numpy')
+
+    t_X_np = original_adf(X_np, value=value)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
+
+
+@pytest.mark.parametrize("value", [1.0, 42])
+def test_add_dummy_feature_sparse(small_sparse_dataset, value):  # noqa: F811
+    X_np, X = small_sparse_dataset
+
+    t_X = add_dummy_feature(X, value=value)
+    assert type(t_X) == type(X)
+    t_X = to_output_type(t_X, 'numpy')
+
+    t_X_np = original_adf(X_np, value=value)
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
