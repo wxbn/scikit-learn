@@ -718,18 +718,22 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             self.n_samples_seen_ = np.repeat(
                 self.n_samples_seen_, X.shape[1]).astype(np.int64, copy=False)
 
-        """
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives.")
 
-            sparse_constructor = (sparse.csr_matrix
-                                  if X.format == 'csr' else sparse.csc_matrix)
-            counts_nan = sparse_constructor(
-                        (np.isnan(X.data), X.indices, X.indptr),
-                        shape=X.shape).sum(axis=0).A.ravel()
+            if X.format == 'csr':
+                X = X.tocsc()
+
+            counts_nan = np.empty(X.shape[1])
+            _isnan = np.isnan(X.data)
+
+            start = X.indptr[0]
+            for i, end in enumerate(X.indptr[1:]):
+                counts_nan[i] = _isnan[start:end].sum()
+                start = end
 
             if not hasattr(self, 'n_samples_seen_'):
                 self.n_samples_seen_ = (
@@ -739,6 +743,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 # First pass
                 if not hasattr(self, 'scale_'):
                     self.mean_, self.var_ = mean_variance_axis(X, axis=0)
+
+                # TODO
+                """
                 # Next passes
                 else:
                     self.mean_, self.var_, self.n_samples_seen_ = \
@@ -746,13 +753,13 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                                                 last_mean=self.mean_,
                                                 last_var=self.var_,
                                                 last_n=self.n_samples_seen_)
+                """
             else:
                 self.mean_ = None
                 self.var_ = None
                 if hasattr(self, 'scale_'):
                     self.n_samples_seen_ += X.shape[0] - counts_nan
-        """
-        if not sparse.issparse(X):
+        else:
             if not hasattr(self, 'n_samples_seen_'):
                 self.n_samples_seen_ = np.zeros(X.shape[1], dtype=np.int64)
 
@@ -804,11 +811,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         output_type = get_input_type(X)
         X = self._validate_data(X, reset=False,
-                                accept_sparse='csr', copy=copy,
+                                accept_sparse=['csr', 'csc'], copy=copy,
                                 estimator=self, dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan')
 
-        """
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -816,8 +822,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                     "instead. See docstring for motivation and alternatives.")
             if self.scale_ is not None:
                 inplace_column_scale(X, 1 / self.scale_)
-        """
-        if not sparse.issparse(X):
+        else:
             if self.with_mean:
                 X -= self.mean_
             if self.with_std:
@@ -846,11 +851,10 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         copy = copy if copy is not None else self.copy
 
         output_type = get_input_type(X)
-        X = check_array(X, accept_sparse='csr', copy=copy,
+        X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
-        """
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -863,8 +867,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 X = X.copy()
             if self.scale_ is not None:
                 inplace_column_scale(X, self.scale_)
-        """
-        if not sparse.issparse(X):
+        else:
             X = np.asarray(X)
             if copy:
                 X = X.copy()

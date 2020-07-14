@@ -102,6 +102,28 @@ def test_standard_scaler(small_clf_dataset, with_mean, with_std):  # noqa: F811
     assert_allclose(r_X, X_np, rtol=0.0001, atol=0.0001)
 
 
+@pytest.mark.parametrize("with_std", [True, False])
+def test_standard_scaler_sparse(small_sparse_dataset, with_std):  # noqa: F811
+    X_np, X = small_sparse_dataset
+
+    scaler = StandardScaler(copy=True, with_mean=False, with_std=with_std)
+    t_X = scaler.fit_transform(X)
+    assert type(t_X) == type(X)
+
+    t_X_np = np.array(X_np, copy=True)
+    if with_std:
+        t_X_np /= t_X_np.std(axis=0)
+
+    r_X = scaler.inverse_transform(t_X)
+    assert type(r_X) == type(t_X)
+
+    t_X = to_output_type(t_X, 'numpy')
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
+
+    r_X = to_output_type(r_X, 'numpy')
+    assert_allclose(r_X, X_np, rtol=0.0001, atol=0.0001)
+
+
 @pytest.mark.parametrize("with_mean", [True, False])
 @pytest.mark.parametrize("with_std", [True, False])
 def test_scale(small_clf_dataset, with_mean, with_std):  # noqa: F811

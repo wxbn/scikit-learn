@@ -163,9 +163,15 @@ def to_output_type(array, output_type, order='F'):
     if output_type == 'numpy_csc':
         return cpu_sparse.csc_matrix(array.get())
     if output_type == 'cupy_csr':
-        return array
+        if array.format == 'csc':
+            return array.tocsr()
+        else:
+            return array
     if output_type == 'cupy_csc':
-        return array
+        if array.format == 'csr':
+            return array.tocsc()
+        else:
+            return array
 
     if cpu_sparse.issparse(array):
         if output_type == 'numpy':
