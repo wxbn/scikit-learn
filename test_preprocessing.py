@@ -16,7 +16,7 @@
 import pytest
 
 from .sklearn.preprocessing import StandardScaler, MinMaxScaler, \
-                    MaxAbsScaler, Normalizer
+                    MaxAbsScaler, Normalizer, Binarizer
 from .sklearn.preprocessing import scale, minmax_scale, normalize, \
                     add_dummy_feature, binarize
 from .sklearn.preprocessing import SimpleImputer
@@ -478,6 +478,40 @@ def test_binarize_sparse(small_sparse_dataset, threshold):  # noqa: F811
     X_np, X = small_sparse_dataset
 
     t_X = binarize(X, threshold=threshold, copy=True)
+    assert type(t_X) == type(X)
+    t_X = to_output_type(t_X, 'numpy')
+
+    t_X_np = np.array(X_np, copy=True)
+    cond = X_np > threshold
+    t_X_np[~cond] = 0
+    t_X_np[cond] = 1
+
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
+
+
+@pytest.mark.parametrize("threshold", [0., 1.])
+def test_binarizer(small_clf_dataset, threshold):  # noqa: F811
+    X_np, X = small_clf_dataset
+
+    binarizer = Binarizer(threshold=threshold, copy=True)
+    t_X = binarizer.fit_transform(X)
+    assert type(t_X) == type(X)
+    t_X = to_output_type(t_X, 'numpy')
+
+    t_X_np = np.array(X_np, copy=True)
+    cond = X_np > threshold
+    t_X_np[~cond] = 0
+    t_X_np[cond] = 1
+
+    assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
+
+
+@pytest.mark.parametrize("threshold", [0., 1.])
+def test_binarizer_sparse(small_sparse_dataset, threshold):  # noqa: F811
+    X_np, X = small_sparse_dataset
+
+    binarizer = Binarizer(threshold=threshold, copy=True)
+    t_X = binarizer.fit_transform(X)
     assert type(t_X) == type(X)
     t_X = to_output_type(t_X, 'numpy')
 

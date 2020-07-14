@@ -2011,7 +2011,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
         ----------
         X : array-like
         """
-        self._validate_data(X, accept_sparse='csr')
+        self._validate_data(X, accept_sparse=['csr', 'csc'])
         return self
 
     def transform(self, X, copy=None):
