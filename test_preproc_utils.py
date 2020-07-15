@@ -31,6 +31,7 @@ clf_np, _ = make_classification(n_samples=500,
 
 
 clf_sp_np = np.array(clf_np, copy=True)
+
 clf_sp_np.ravel()[np.random.choice(clf_sp_np.size,
                                    int(clf_sp_np.size*0.1),
                                    replace=False)] = 0.

@@ -320,10 +320,14 @@ class SimpleImputer(_BaseImputer):
                     raise NotImplementedError
 
                 elif strategy == "most_frequent":
-                    values, counts = np.unique(column,
-                                               return_counts=True)
-                    max_idx = np.argmax(counts)
-                    statistics[i] = values[max_idx]
+                    if n_zeros > column.size:
+                        values, counts = np.unique(column,
+                                                   return_counts=True)
+                        max_idx = np.argmax(counts)
+                        value = values[max_idx]
+                    else:
+                        value = 0
+                    statistics[i] = value
         return statistics
 
     def _dense_fit(self, X, strategy, missing_values, fill_value):
@@ -349,10 +353,16 @@ class SimpleImputer(_BaseImputer):
             most_frequent = cpu_np.empty(n_features, dtype=X.dtype)
             for i in range(n_features):
                 feature_mask_idxs = np.where(~mask[:, i])[0]
-                values, counts = np.unique(X[feature_mask_idxs, i],
-                                           return_counts=True)
-                max_idx = np.argmax(counts)
-                most_frequent[i] = values[max_idx]
+                count_missing = feature_mask_idxs.size
+                count_present = X.shape[0] - count_missing
+                if count_present > count_missing:
+                    values, counts = np.unique(X[feature_mask_idxs, i],
+                                               return_counts=True)
+                    max_idx = np.argmax(counts)
+                    value = values[max_idx]
+                else:
+                    value = np.nan
+                most_frequent[i] = value
             return np.array(most_frequent)
 
         # Constant

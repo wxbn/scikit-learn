@@ -24,6 +24,7 @@ from .sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import PolynomialFeatures as OriginalPolFeat
 from sklearn.preprocessing import scale as orignal_scale
 from sklearn.preprocessing import add_dummy_feature as original_adf
+from sklearn.impute import SimpleImputer as OriginalSimpleImputer
 
 from .thirdparty_adapters import to_output_type
 from .test_preproc_utils import small_clf_dataset  # noqa: F401
@@ -326,38 +327,38 @@ def test_imputer(small_int_dataset, strategy):  # noqa: F811
 
 
 @pytest.mark.parametrize("strategy", ["mean", "most_frequent", "constant"])
-def test_sparse_imputer(small_sparse_dataset, strategy):  # noqa: F811
+@pytest.mark.parametrize("missing_values", [np.nan, 1.])
+def test_sparse_imputer(small_sparse_dataset, strategy,  # noqa: F811
+                        missing_values):
     X_np, X = small_sparse_dataset
     if isinstance(X, (cpu_sp.csr_matrix, gpu_sp.csr_matrix)):
         pytest.skip("unsupported sparse matrix")
 
+    if X.format == 'csr':
+        X_np = cpu_sp.csr_matrix(X_np)
+    else:
+        X_np = cpu_sp.csc_matrix(X_np)
+
+    if np.isnan(missing_values):
+        # Adding nan when missing value is nan
+        random_loc = np.random.choice(X.nnz,
+                                      int(X.nnz * 0.3),
+                                      replace=False)
+        X_np.data[random_loc] = np.nan
+        X = X.copy()
+        X.data[random_loc] = np.nan
+
     fill_value = np.random.randint(10, size=1)[0]
 
-    imputer = SimpleImputer(copy=True, strategy=strategy,
-                            fill_value=fill_value)
+    imputer = SimpleImputer(copy=True, missing_values=missing_values,
+                            strategy=strategy, fill_value=fill_value)
     t_X = imputer.fit_transform(X)
     assert type(t_X) == type(X)
 
-    t_X_np = np.array(X_np, copy=True)
-    n_features = t_X_np.shape[1]
-
-    if strategy == "mean":
-        mean = np.nanmean(t_X_np, axis=0)
-        for i in range(n_features):
-            mask = np.where(np.isnan(t_X_np[:, i]))
-            t_X_np[mask, i] = mean[i]
-    elif strategy == "most_frequent":
-        for i in range(n_features):
-            values, counts = np.unique(t_X_np[:, i], return_counts=True)
-            max_idx = np.argmax(counts)
-            most_frequent = values[max_idx]
-
-            mask = np.where(np.isnan(t_X_np[:, i]))
-            t_X_np[mask, i] = most_frequent
-    elif strategy == "constant":
-        t_X_np[np.where(np.isnan(t_X_np))] = fill_value
-
-    assert not np.isnan(t_X_np).any()
+    imputer = OriginalSimpleImputer(copy=True, missing_values=missing_values,
+                                    strategy=strategy, fill_value=fill_value)
+    t_X_np = imputer.fit_transform(X_np)
+    t_X_np = to_output_type(t_X_np, 'numpy')
 
     t_X = to_output_type(t_X, 'numpy')
     assert_allclose(t_X, t_X_np, rtol=0.0001, atol=0.0001)
