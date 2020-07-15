@@ -152,7 +152,6 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                              " got axis=%d" % axis)
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
-            print("var test", var)
             var = _handle_zeros_in_scale(var, copy=False)
             inplace_column_scale(X, 1 / np.sqrt(var))
     else:

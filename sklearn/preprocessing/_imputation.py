@@ -320,13 +320,15 @@ class SimpleImputer(_BaseImputer):
                     raise NotImplementedError
 
                 elif strategy == "most_frequent":
-                    if n_zeros > column.size:
-                        values, counts = np.unique(column,
-                                                   return_counts=True)
-                        max_idx = np.argmax(counts)
-                        value = values[max_idx]
-                    else:
+                    values, counts = np.unique(column,
+                                               return_counts=True)
+                    count_max = counts.max()
+                    if count_max > n_zeros:
+                        value = values[counts == count_max].min()
+                    elif n_zeros > count_max:
                         value = 0
+                    else:
+                        value = min(0, values[counts == count_max].min())
                     statistics[i] = value
         return statistics
 
@@ -353,13 +355,11 @@ class SimpleImputer(_BaseImputer):
             most_frequent = cpu_np.empty(n_features, dtype=X.dtype)
             for i in range(n_features):
                 feature_mask_idxs = np.where(~mask[:, i])[0]
-                count_missing = feature_mask_idxs.size
-                count_present = X.shape[0] - count_missing
-                if count_present > count_missing:
-                    values, counts = np.unique(X[feature_mask_idxs, i],
-                                               return_counts=True)
-                    max_idx = np.argmax(counts)
-                    value = values[max_idx]
+                values, counts = np.unique(X[feature_mask_idxs, i],
+                                           return_counts=True)
+                count_max = counts.max()
+                if count_max > 0:
+                    value = values[counts == count_max].min()
                 else:
                     value = np.nan
                 most_frequent[i] = value
