@@ -14,16 +14,17 @@
 #
 
 import pytest
+
 from cuml.common import input_to_cuml_array
 from sklearn.datasets import make_classification
+from .thirdparty_adapters import to_output_type
+from numpy.testing import assert_allclose as np_assert_allclose
+
 import numpy as np
-import cupy as cp
 from cupy.sparse import csr_matrix as gpu_csr_matrix
 from cupy.sparse import csc_matrix as gpu_csc_matrix
 from scipy.sparse import csr_matrix as cpu_csr_matrix
 from scipy.sparse import csc_matrix as cpu_csc_matrix
-from .thirdparty_adapters import to_output_type
-from numpy.testing import assert_allclose as np_assert_allclose
 
 
 def create_rand_clf():
@@ -47,7 +48,7 @@ def sparsify(dataset):
                                   int(dataset.size * 0.3),
                                   replace=False)
     dataset.ravel()[random_loc] = 0
-    return dataset
+    return cpu_csr_matrix(dataset)
 
 
 @pytest.fixture(scope="session",
@@ -78,12 +79,10 @@ def sparse_clf_dataset(request):
         converted_clf = cpu_csr_matrix(clf)
     elif request.param == "numpy-csc":
         converted_clf = cpu_csc_matrix(clf)
-
-    gpu_clf = cp.array(clf, order='F')
-    if request.param == "cupy-csr":
-        converted_clf = gpu_csr_matrix(gpu_clf)
+    elif request.param == "cupy-csr":
+        converted_clf = gpu_csr_matrix(clf)
     elif request.param == "cupy-csc":
-        converted_clf = gpu_csc_matrix(gpu_clf)
+        converted_clf = gpu_csc_matrix(clf)
     return clf, converted_clf
 
 
@@ -97,12 +96,10 @@ def sparse_int_dataset(request):
         converted_clf = cpu_csr_matrix(clf)
     elif request.param == "numpy-csc":
         converted_clf = cpu_csc_matrix(clf)
-
-    gpu_clf = cp.array(clf, order='F')
-    if request.param == "cupy-csr":
-        converted_clf = gpu_csr_matrix(gpu_clf)
+    elif request.param == "cupy-csr":
+        converted_clf = gpu_csr_matrix(clf)
     elif request.param == "cupy-csc":
-        converted_clf = gpu_csc_matrix(gpu_clf)
+        converted_clf = gpu_csc_matrix(clf)
     return clf, converted_clf
 
 
