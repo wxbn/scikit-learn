@@ -22,6 +22,8 @@ from cupy.sparse import csr_matrix as gpu_csr_matrix
 from cupy.sparse import csc_matrix as gpu_csc_matrix
 from scipy.sparse import csr_matrix as cpu_csr_matrix
 from scipy.sparse import csc_matrix as cpu_csc_matrix
+from .thirdparty_adapters import to_output_type
+from numpy.testing import assert_allclose as np_assert_allclose
 
 
 def create_rand_clf():
@@ -102,3 +104,11 @@ def sparse_int_dataset(request):
     elif request.param == "cupy-csc":
         converted_clf = gpu_csc_matrix(gpu_clf)
     return clf, converted_clf
+
+
+def assert_allclose(actual, desired, rtol=1e-07, atol=0):
+    if not isinstance(actual, np.ndarray):
+        actual = to_output_type(actual, 'numpy')
+    if not isinstance(desired, np.ndarray):
+        desired = to_output_type(desired, 'numpy')
+    return np_assert_allclose(actual, desired, rtol=rtol, atol=atol)
