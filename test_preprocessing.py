@@ -17,10 +17,10 @@ import pytest
 
 from .sklearn.preprocessing import StandardScaler, MinMaxScaler, \
                                    MaxAbsScaler, Normalizer, \
-                                   Binarizer, SimpleImputer, PolynomialFeatures
+                                   Binarizer, PolynomialFeatures, SimpleImputer
 from .sklearn.preprocessing import scale, minmax_scale, normalize, \
                                    add_dummy_feature, binarize
-from .sklearn.preprocessing import StandardScaler as skStandardScaler, \
+from sklearn.preprocessing import StandardScaler as skStandardScaler, \
                                    MinMaxScaler as skMinMaxScaler, \
                                    MaxAbsScaler as skMaxAbsScaler, \
                                    Normalizer as skNormalizer, \
@@ -159,8 +159,8 @@ def test_maxabs_scaler_sparse(sparse_clf_dataset):  # noqa: F811
     assert type(r_X) == type(t_X)
 
     scaler = skMaxAbsScaler(copy=True)
-    sk_t_X = scaler.fit_transform(X)
-    sk_r_X = scaler.inverse_transform(t_X)
+    sk_t_X = scaler.fit_transform(X_np)
+    sk_r_X = scaler.inverse_transform(sk_t_X)
 
     assert_allclose(t_X, sk_t_X, rtol=0.0001, atol=0.0001)
     assert_allclose(r_X, sk_r_X, rtol=0.0001, atol=0.0001)
