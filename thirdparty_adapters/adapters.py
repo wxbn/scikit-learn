@@ -40,51 +40,102 @@ numeric_types = [
 ]
 
 
-def check_sparse(array, accept_sparse):
-    def display_error():
+def check_sparse(array, accept_sparse, accept_large_sparse):
+    """Checks that the sparse array is valid
+    Parameters
+    ----------
+    accept_sparse : string, boolean or list/tuple of strings (default=False)
+        String[s] representing allowed sparse matrix formats, such as 'csc',
+        'csr', etc. If the input is sparse but not in the allowed format,
+        it will be converted to the first listed format. True allows the input
+        to be any format. False means that a sparse matrix input will
+        raise an error.
+    accept_large_sparse : bool (default=True)
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse=False will cause it to be accepted
+        only if its indices are stored with a 32-bit dtype.
+    Returns
+    -------
+    None or raise error
+    """
+    if accept_sparse is True:
+        return
+
+    def sparse_error():
         err_msg = "This algorithm does not support the sparse " + \
                   "input in the current configuration."
         raise ValueError(err_msg)
-    if cpu_sparse.issparse(array) or gpu_sparse.issparse(array):
+
+    is_sparse = hasattr(array, 'format')
+    if is_sparse:
         if accept_sparse is False:
-            display_error()
+            sparse_error()
 
-        if accept_sparse is True:
-            return
-
-        if hasattr(array, 'format'):
-            sptype = array.format
-        else:
-            sptype = 'not sparse'
+        if not accept_large_sparse:
+            if array.indices.dtype != cp.int32 or \
+               array.indptr.dtype != cp.int32:
+                sparse_error()
 
         if isinstance(accept_sparse, (tuple, list)):
-            if sptype not in accept_sparse:
-                display_error()
-        elif sptype != accept_sparse:
-            display_error()
-
-
-def check_f16(dtype):
-    # fp16 is not supported, so remove from the list of dtypes if present
-    if isinstance(dtype, (list, tuple)):
-        return [d for d in dtype if d != np.float16]
-    elif dtype == np.float16:
-        raise NotImplementedError("Float16 not supported by cuML")
+            if array.format not in accept_sparse:
+                sparse_error()
+        elif array.format != accept_sparse:
+            sparse_error()
 
 
 def check_dtype(array, dtypes):
+    """Checks that the input dtype is part of acceptable dtypes
+    Parameters
+    ----------
+    array : object
+        Input object to check / convert.
+    dtype : string, type, list of types or None (default="numeric")
+        Data type of result.
+    Returns
+    -------
+    Updated list of acceptable dtypes or raise error
+    """
     if dtypes is None:
-        return
+        return dtypes
+
+    # fp16 is not supported, so remove from the list of dtypes if present
+    if isinstance(dtypes, (list, tuple)):
+        dtypes = [d for d in dtypes if d != np.float16]
+    elif dtypes == np.float16:
+        raise NotImplementedError("Float16 not supported by cuML")
+
     if not isinstance(array, cuDataFrame):
         if array.dtype not in dtypes:
             raise ValueError("Wrong dtype")
     elif any([dt not in dtypes for dt in array.dtypes.tolist()]):
         raise ValueError("Wrong dtype")
+    return dtypes
 
 
-def check_finite(X, force_all_finite):
-    if force_all_finite is True and not cp.all(cp.isfinite(X)):
-        raise ValueError("Non-finite value encountered in array")
+def check_finite(array, force_all_finite):
+    """Checks that the input is finite if necessary
+    Parameters
+    ----------
+    array : object
+        Input object to check / convert.
+    force_all_finite : boolean or 'allow-nan', (default=True)
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        possibilities are:
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
+           ``force_all_finite`` accepts the string ``'allow-nan'``.
+    Returns
+    -------
+    Updated list of acceptable dtypes or raise error
+    """
+    if force_all_finite is True:
+        if not cp.all(cp.isfinite(array)):
+            raise ValueError("Non-finite value encountered in array")
+    elif force_all_finite == 'allow-nan':
+        if cp.any(cp.isinf(array)):
+            raise ValueError("Non-finite value encountered in array")
 
 
 def check_array(array, accept_sparse=False, accept_large_sparse=True,
@@ -92,15 +143,96 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 force_all_finite=True, ensure_2d=True, allow_nd=False,
                 ensure_min_samples=1, ensure_min_features=1,
                 warn_on_dtype=None, estimator=None):
+    """Input validation on an array, list, sparse matrix or similar.
+    By default, the input is checked to be a non-empty 2D array containing
+    only finite values. If the dtype of the array is object, attempt
+    converting to float, raising on failure.
+    Parameters
+    ----------
+    array : object
+        Input object to check / convert.
+    accept_sparse : string, boolean or list/tuple of strings (default=False)
+        String[s] representing allowed sparse matrix formats, such as 'csc',
+        'csr', etc. If the input is sparse but not in the allowed format,
+        it will be converted to the first listed format. True allows the input
+        to be any format. False means that a sparse matrix input will
+        raise an error.
+    accept_large_sparse : bool (default=True)
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse=False will cause it to be accepted
+        only if its indices are stored with a 32-bit dtype.
+    dtype : string, type, list of types or None (default="numeric")
+        Data type of result. If None, the dtype of the input is preserved.
+        If "numeric", dtype is preserved unless array.dtype is object.
+        If dtype is a list of types, conversion on the first type is only
+        performed if the dtype of the input is not in the list.
+    order : 'F', 'C' or None (default=None)
+        Whether an array will be forced to be fortran or c-style.
+        When order is None (default), then if copy=False, nothing is ensured
+        about the memory layout of the output array; otherwise (copy=True)
+        the memory layout of the returned array is kept as close as possible
+        to the original array.
+    copy : boolean (default=False)
+        Whether a forced copy will be triggered. If copy=False, a copy might
+        be triggered by a conversion.
+    force_all_finite : boolean or 'allow-nan', (default=True)
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        possibilities are:
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
+           ``force_all_finite`` accepts the string ``'allow-nan'``.
+    ensure_2d : boolean (default=True)
+        Whether to raise a value error if array is not 2D.
+    allow_nd : boolean (default=False)
+        Whether to allow array.ndim > 2.
+    ensure_min_samples : int (default=1)
+        Make sure that the array has a minimum number of samples in its first
+        axis (rows for a 2D array). Setting to 0 disables this check.
+    ensure_min_features : int (default=1)
+        Make sure that the 2D array has some minimum number of features
+        (columns). The default value of 1 rejects empty datasets.
+        This check is only enforced when the input data has effectively 2
+        dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
+        disables this check.
+    estimator : unused parameter
+    Returns
+    -------
+    array_converted : object
+        The converted and validated array.
+    """
 
-    dtype = check_f16(dtype)
-    check_dtype(array, dtype)
+    if dtype == 'numeric':
+        dtype = numeric_types
 
-    check_sparse(array, accept_sparse)
+    dtype = check_dtype(array, dtype)
+
+    if copy and not order and hasattr(array, 'flags'):
+        if array.flags['F_CONTIGUOUS']:
+            order = 'F'
+        elif array.flags['C_CONTIGUOUS']:
+            order = 'C'
+
+    if not order:
+        order = 'F'
+
+    hasshape = hasattr(array, 'shape')
+    if ensure_2d and hasshape:
+        if len(array.shape) != 2:
+            raise ValueError("Not 2D")
+
+    if not allow_nd and hasshape:
+        if len(array.shape) > 2:
+            raise ValueError("More than 2 dimensions detected")
+
+    if ensure_min_samples > 0 and hasshape:
+        if array.shape[0] < ensure_min_samples:
+            raise ValueError("Not enough samples")
 
     is_sparse = hasattr(array, 'format')
-
     if is_sparse:
+        check_sparse(array, accept_sparse, accept_large_sparse)
         if array.format == 'csr':
             new_array = gpu_csr_matrix(array, copy=copy)
         elif array.format == 'csc':
@@ -113,6 +245,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         return new_array
     else:
         X, n_rows, n_cols, dtype = input_to_cuml_array(array,
+                                                       order=order,
                                                        deepcopy=copy,
                                                        check_dtype=dtype)
         X = X.to_output('cupy')
