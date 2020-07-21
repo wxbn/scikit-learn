@@ -15,24 +15,24 @@
 
 import pytest
 
-from cuml.preprocessing import StandardScaler as cuStandardScaler, \
-                                  MinMaxScaler as cuMinMaxScaler, \
-                                  MaxAbsScaler as cuMaxAbsScaler, \
-                                  Normalizer as cuNormalizer, \
-                                  Binarizer as cuBinarizer, \
-                                  PolynomialFeatures as cuPolynomialFeatures, \
-                                  SimpleImputer as cuSimpleImputer
-from cuml.preprocessing import scale as cu_scale, \
-                                  minmax_scale as cu_minmax_scale, \
-                                  normalize as cu_normalize, \
-                                  add_dummy_feature as cu_add_dummy_feature, \
-                                  binarize as cu_binarize
+from .sklearn.preprocessing import StandardScaler as cuStandardScaler, \
+                                   MinMaxScaler as cuMinMaxScaler, \
+                                   MaxAbsScaler as cuMaxAbsScaler, \
+                                   Normalizer as cuNormalizer, \
+                                   Binarizer as cuBinarizer, \
+                                   PolynomialFeatures as cuPolynomialFeatures,\
+                                   SimpleImputer as cuSimpleImputer
+from .sklearn.preprocessing import scale as cu_scale, \
+                                   minmax_scale as cu_minmax_scale, \
+                                   normalize as cu_normalize, \
+                                   add_dummy_feature as cu_add_dummy_feature, \
+                                   binarize as cu_binarize
 from sklearn.preprocessing import StandardScaler as skStandardScaler, \
-                                   MinMaxScaler as skMinMaxScaler, \
-                                   MaxAbsScaler as skMaxAbsScaler, \
-                                   Normalizer as skNormalizer, \
-                                   Binarizer as skBinarizer, \
-                                   PolynomialFeatures as skPolynomialFeatures
+                                  MinMaxScaler as skMinMaxScaler, \
+                                  MaxAbsScaler as skMaxAbsScaler, \
+                                  Normalizer as skNormalizer, \
+                                  Binarizer as skBinarizer, \
+                                  PolynomialFeatures as skPolynomialFeatures
 from sklearn.preprocessing import scale as sk_scale, \
                                   minmax_scale as sk_minmax_scale, \
                                   normalize as sk_normalize, \
