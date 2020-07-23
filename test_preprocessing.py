@@ -247,7 +247,8 @@ def test_normalize_sparse(sparse_clf_dataset, norm):  # noqa: F811
     assert_allclose(t_X, sk_t_X)
 
 
-@pytest.mark.parametrize("strategy", ["mean", "most_frequent", "constant"])
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent",
+                                      "constant"])
 @pytest.mark.parametrize("missing_values", [0., 1.])
 def test_imputer(int_dataset, strategy, missing_values):  # noqa: F811
     X_np, X = int_dataset
@@ -265,7 +266,8 @@ def test_imputer(int_dataset, strategy, missing_values):  # noqa: F811
     assert_allclose(t_X, sk_t_X)
 
 
-@pytest.mark.parametrize("strategy", ["mean", "most_frequent", "constant"])
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent",
+                         "constant"])
 @pytest.mark.parametrize("missing_values", [np.nan, 1.])
 def test_imputer_sparse(sparse_int_dataset, strategy,  # noqa: F811
                         missing_values):
