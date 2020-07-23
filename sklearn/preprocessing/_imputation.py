@@ -138,12 +138,6 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 class SimpleImputer(_BaseImputer):
     """Imputation transformer for completing missing values.
 
-    Read more in the :ref:`User Guide <impute>`.
-
-    .. versionadded:: 0.20
-       `SimpleImputer` replaces the previous `sklearn.preprocessing.Imputer`
-       estimator which is now removed.
-
     Parameters
     ----------
     missing_values : number, string, np.nan (default) or None
@@ -201,10 +195,6 @@ class SimpleImputer(_BaseImputer):
         During :meth:`transform`, features corresponding to `np.nan`
         statistics will be discarded.
 
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
-        Indicator used to add binary indicators for missing values.
-        ``None`` if add_indicator is False.
-
     See also
     --------
     IterativeImputer : Multivariate imputation of missing values.
@@ -212,7 +202,7 @@ class SimpleImputer(_BaseImputer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.impute import SimpleImputer
+    >>> from cuml.impute import SimpleImputer
     >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
     SimpleImputer()

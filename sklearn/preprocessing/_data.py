@@ -83,8 +83,6 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
 
     Center to the mean and component wise scale to unit variance.
 
-    Read more in the :ref:`User Guide <preprocessing_scaler>`.
-
     Parameters
     ----------
     X : {array-like, sparse matrix}
@@ -127,14 +125,9 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
     affect model performance.
 
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
     See also
     --------
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
     """  # noqa
     output_type = get_input_type(X)
@@ -217,8 +210,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     This transformation is often used as an alternative to zero mean,
     unit variance scaling.
 
-    Read more in the :ref:`User Guide <preprocessing_scaler>`.
-
     Parameters
     ----------
     feature_range : tuple (min, max), default=(0, 1)
@@ -238,26 +229,14 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         Per feature relative scaling of the data. Equivalent to
         ``(max - min) / (X.max(axis=0) - X.min(axis=0))``
 
-        .. versionadded:: 0.17
-           *scale_* attribute.
-
     data_min_ : ndarray of shape (n_features,)
         Per feature minimum seen in the data
-
-        .. versionadded:: 0.17
-           *data_min_*
 
     data_max_ : ndarray of shape (n_features,)
         Per feature maximum seen in the data
 
-        .. versionadded:: 0.17
-           *data_max_*
-
     data_range_ : ndarray of shape (n_features,)
         Per feature range ``(data_max_ - data_min_)`` seen in the data
-
-        .. versionadded:: 0.17
-           *data_range_*
 
     n_samples_seen_ : int
         The number of samples processed by the estimator.
@@ -266,7 +245,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> from cuml.preprocessing import MinMaxScaler
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
@@ -289,10 +268,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     -----
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     @_deprecate_positional_args
@@ -465,12 +440,6 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     This transformation is often used as an alternative to zero mean,
     unit variance scaling.
 
-    Read more in the :ref:`User Guide <preprocessing_scaler>`.
-
-    .. versionadded:: 0.17
-       *minmax_scale* function interface
-       to :class:`sklearn.preprocessing.MinMaxScaler`.
-
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
@@ -490,13 +459,6 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     See also
     --------
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-
-    Notes
-    -----
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
@@ -554,8 +516,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     This scaler can also be applied to sparse CSR or CSC matrices by passing
     `with_mean=False` to avoid breaking the sparsity structure of the data.
 
-    Read more in the :ref:`User Guide <preprocessing_scaler>`.
-
     Parameters
     ----------
     copy : boolean, optional, default True
@@ -581,9 +541,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         Per feature relative scaling of the data. This is calculated using
         `np.sqrt(var_)`. Equal to ``None`` when ``with_std=False``.
 
-        .. versionadded:: 0.17
-           *scale_*
-
     mean_ : ndarray or None, shape (n_features,)
         The mean value for each feature in the training set.
         Equal to ``None`` when ``with_mean=False``.
@@ -601,7 +558,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import StandardScaler
+    >>> from cuml.preprocessing import StandardScaler
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler()
     >>> print(scaler.fit(data))
@@ -620,7 +577,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     --------
     scale: Equivalent function without the estimator API.
 
-    :class:`sklearn.decomposition.PCA`
+    :class:`cuml.decomposition.PCA`
         Further removes the linear correlation across features with 'whiten=True'.
 
     Notes
@@ -631,10 +588,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     We use a biased estimator for the standard deviation, equivalent to
     `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
     affect model performance.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
 
     @_deprecate_positional_args
@@ -892,8 +845,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
     This scaler can also be applied to sparse CSR or CSC matrices.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     copy : boolean, optional, default is True
@@ -905,9 +856,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
 
-        .. versionadded:: 0.17
-           *scale_* attribute.
-
     max_abs_ : ndarray, shape (n_features,)
         Per feature maximum absolute value.
 
@@ -917,7 +865,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import MaxAbsScaler
+    >>> from cuml.preprocessing import MaxAbsScaler
     >>> X = [[ 1., -1.,  2.],
     ...      [ 2.,  0.,  0.],
     ...      [ 0.,  1., -1.]]
@@ -937,10 +885,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     -----
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     @_deprecate_positional_args
@@ -1094,16 +1038,11 @@ def maxabs_scale(X, *, axis=0, copy=True):
     See also
     --------
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
     Notes
     -----
     NaNs are treated as missing values: disregarded to compute the statistics,
     and maintained during the data transformation.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
 
@@ -1439,12 +1378,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Order of output array in the dense case. 'F' order is faster to
         compute, but may slow down subsequent estimators.
 
-        .. versionadded:: 0.21
-
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> from cuml.preprocessing import PolynomialFeatures
     >>> X = np.arange(6).reshape(3, 2)
     >>> X
     array([[0, 1],
@@ -1479,9 +1416,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     Be aware that the number of features in the output array scales
     polynomially in the number of features of the input array, and
     exponentially in the degree. High degrees can cause overfitting.
-
-    See :ref:`examples/linear_model/plot_polynomial_interpolation.py
-    <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
     @_deprecate_positional_args
     def __init__(self, degree=2, *, interaction_only=False, include_bias=True,
@@ -1696,8 +1630,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
-    Read more in the :ref:`User Guide <preprocessing_normalization>`.
-
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape [n_samples, n_features]
@@ -1734,14 +1666,6 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     See also
     --------
     Normalizer: Performs normalization using the ``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-
-    Notes
-    -----
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
     """
     if norm not in ('l1', 'l2', 'max'):
         raise ValueError("'%s' is not a supported norm" % norm)
@@ -1813,8 +1737,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
     of the vectors and is the base similarity metric for the Vector
     Space Model commonly used by the Information Retrieval community.
 
-    Read more in the :ref:`User Guide <preprocessing_normalization>`.
-
     Parameters
     ----------
     norm : 'l1', 'l2', or 'max', optional ('l2' by default)
@@ -1829,7 +1751,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import Normalizer
+    >>> from cuml.preprocessing import Normalizer
     >>> X = [[4, 1, 2, 2],
     ...      [1, 3, 9, 3],
     ...      [5, 7, 5, 1]]
@@ -1845,10 +1767,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
     -----
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
 
     See also
@@ -1899,8 +1817,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix
 
-    Read more in the :ref:`User Guide <preprocessing_binarization>`.
-
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape [n_samples, n_features]
@@ -1920,7 +1836,6 @@ def binarize(X, *, threshold=0.0, copy=True):
     See also
     --------
     Binarizer: Performs binarization using the ``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     output_type = get_input_type(X)
     X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
@@ -1956,8 +1871,6 @@ class Binarizer(TransformerMixin, BaseEstimator):
     consider boolean random variables (e.g. modelled using the Bernoulli
     distribution in a Bayesian setting).
 
-    Read more in the :ref:`User Guide <preprocessing_binarization>`.
-
     Parameters
     ----------
     threshold : float, optional (0.0 by default)
@@ -1970,7 +1883,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import Binarizer
+    >>> from cuml.preprocessing import Binarizer
     >>> X = [[ 1., -1.,  2.],
     ...      [ 2.,  0.,  0.],
     ...      [ 0.,  1., -1.]]
@@ -2158,7 +2071,7 @@ def add_dummy_feature(X, value=1.0):
     Examples
     --------
 
-    >>> from sklearn.preprocessing import add_dummy_feature
+    >>> from cuml.preprocessing import add_dummy_feature
     >>> add_dummy_feature([[0, 1], [1, 0]])
     array([[1., 0., 1.],
            [1., 1., 0.]])
