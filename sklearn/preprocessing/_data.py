@@ -1086,10 +1086,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     sample mean / variance in a negative way. In such cases, the median and
     the interquartile range often give better results.
 
-    .. versionadded:: 0.17
-
-    Read more in the :ref:`User Guide <preprocessing_scaler>`.
-
     Parameters
     ----------
     with_centering : boolean, True by default
@@ -1105,8 +1101,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
         Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
         Quantile range used to calculate ``scale_``.
-
-        .. versionadded:: 0.18
 
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
@@ -1127,7 +1121,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import RobustScaler
+    >>> from cuml.preprocessing import RobustScaler
     >>> X = [[ 1., -2.,  2.],
     ...      [ -2.,  1.,  3.],
     ...      [ 4.,  1., -2.]]
@@ -1143,15 +1137,9 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     --------
     robust_scale: Equivalent function without the estimator API.
 
-    :class:`sklearn.decomposition.PCA`
+    :class:`cuml.decomposition.PCA`
         Further removes the linear correlation across features with
         'whiten=True'.
-
-    Notes
-    -----
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     https://en.wikipedia.org/wiki/Median
     https://en.wikipedia.org/wiki/Interquartile_range
@@ -1189,7 +1177,14 @@ class RobustScaler(TransformerMixin, BaseEstimator):
                 raise ValueError(
                     "Cannot center sparse matrices: use `with_centering=False`"
                     " instead. See docstring for motivation and alternatives.")
-            self.center_ = np.nanmedian(X, axis=0)
+            middle, is_odd = divmod(X.shape[0], 2)
+            X_sorted = np.sort(X, axis=0)
+            if is_odd:
+                self.center_ = X_sorted[middle]
+            else:
+                elm1 = X_sorted[middle-1]
+                elm2 = X_sorted[middle]
+                self.center_ = (elm1 + elm2) / 2.
         else:
             self.center_ = None
 
@@ -1204,10 +1199,12 @@ class RobustScaler(TransformerMixin, BaseEstimator):
                 else:
                     column_data = X[:, feature_idx]
 
-                quantiles.append(np.nanpercentile(column_data,
-                                                  self.quantile_range))
+                is_not_nan = ~np.isnan(column_data).astype(np.bool)
+                column_data = column_data[is_not_nan]
+                quantiles.append(np.percentile(column_data,
+                                               self.quantile_range))
 
-            quantiles = np.transpose(quantiles)
+            quantiles = np.array(quantiles).T
 
             self.scale_ = quantiles[1] - quantiles[0]
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
@@ -1225,21 +1222,21 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             The data used to scale along the specified axis.
         """
         check_is_fitted(self)
+
+        output_type = get_input_type(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
-        """
         if sparse.issparse(X):
             if self.with_scaling:
                 inplace_column_scale(X, 1.0 / self.scale_)
-        """
-        if not sparse.issparse(X):
+        else:
             if self.with_centering:
                 X -= self.center_
             if self.with_scaling:
                 X /= self.scale_
-        return X
+        return to_output_type(X, output_type)
 
     def inverse_transform(self, X):
         """Scale back the data to the original representation
@@ -1250,21 +1247,21 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             The data used to scale along the specified axis.
         """
         check_is_fitted(self)
+
+        output_type = get_input_type(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
-        """
         if sparse.issparse(X):
             if self.with_scaling:
                 inplace_column_scale(X, self.scale_)
-        """
-        if not sparse.issparse(X):
+        else:
             if self.with_scaling:
                 X *= self.scale_
             if self.with_centering:
                 X += self.center_
-        return X
+        return to_output_type(X, output_type)
 
     def _more_tags(self):
         return {'allow_nan': True}
@@ -1321,15 +1318,11 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
 
     To avoid memory copy the caller should pass a CSR matrix.
 
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
     See also
     --------
     RobustScaler: Performs centering and scaling using the ``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
+    output_type = get_input_type(X)
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
                     ensure_2d=False, dtype=FLOAT_DTYPES,
                     force_all_finite='allow-nan')
@@ -1348,7 +1341,7 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
     if original_ndim == 1:
         X = X.ravel()
 
-    return X
+    return to_output_type(X, output_type)
 
 
 class PolynomialFeatures(TransformerMixin, BaseEstimator):
